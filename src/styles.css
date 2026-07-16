@@ -156,6 +156,16 @@ body {
 .btn:disabled { cursor: not-allowed; color: var(--text-dim); border-color: var(--border); }
 .btn-primary { border-color: var(--accent-text); color: var(--accent-text); }
 .btn-danger { border-color: var(--alarm-text); color: var(--alarm-text); }
+.ctl-check { align-self: center; }
+.ctl-check label {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ctl-check input[type='checkbox'] { width: 1.05rem; height: 1.05rem; accent-color: var(--accent-text); }
 
 /* ---- Stepper ---- */
 .step-controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.8rem 0; }
@@ -351,6 +361,7 @@ table.cmp { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-widt
 .cmp th { background-color: var(--surface-2); }
 .cmp td { background-color: var(--surface); }
 .cmp .this-row th, .cmp .this-row td { border-color: var(--accent-text); }
+table.log-table { min-width: 0; width: 100%; margin-top: 0.4rem; }
 
 /* ---- Real-world cards ---- */
 .rw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }

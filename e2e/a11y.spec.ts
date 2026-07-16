@@ -21,6 +21,10 @@ async function prepare(page: Page): Promise<void> {
     await page.locator(id).click();
     await expect(page.locator('#attack-out .attack-out')).toBeVisible();
   }
+  await page.locator('#crowd-btn').click();
+  await expect(page.locator('#crowd-join')).toBeEnabled();
+  await page.locator('#crowd-join').click();
+  await expect(page.locator('#crowd-out .verdicts')).toBeVisible();
   await page.evaluate(() => {
     document.querySelectorAll('details').forEach((d) => (d.open = true));
   });
@@ -50,6 +54,18 @@ test('no WCAG A/AA violations — light theme', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await prepare(page);
   await scan(page);
+});
+
+test('the demo teaches: size correlates without collusion, padding restores the anonymity set', async ({ page }) => {
+  await page.goto('.');
+  await page.locator('#crowd-btn').click();
+  await page.locator('#crowd-join').click();
+  await expect(page.locator('#crowd-out .verdict-alarm')).toContainText('size alone');
+  await expect(page.locator('#crowd-out .verdict-neutral')).toContainText('nothing was decrypted');
+  await page.locator('#crowd-pad').check();
+  await page.locator('#crowd-btn').click();
+  await page.locator('#crowd-join').click();
+  await expect(page.locator('#crowd-out .verdict-ok')).toContainText('anonymity set');
 });
 
 test('the demo teaches: collusion breaks privacy while crypto stays valid', async ({ page }) => {

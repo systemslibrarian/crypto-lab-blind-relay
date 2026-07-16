@@ -95,8 +95,15 @@ export function pipelinePanel(): string {
     the relay's card shows genuine HPKE ciphertext, the gateway's shows the genuine decryption.</p>
     <div class="controls">
       <div class="ctl">
-        <label for="query-input">Search query (becomes the request path)</label>
+        <label for="query-input">Your sensitive input (query, or note body for POST)</label>
         <input type="text" id="query-input" value="chest pain symptoms" maxlength="120" />
+      </div>
+      <div class="ctl">
+        <label for="method-select">Request shape</label>
+        <select id="method-select">
+          <option value="GET" selected>GET /search?q=…</option>
+          <option value="POST">POST /v1/submit + JSON body</option>
+        </select>
       </div>
       <div class="ctl">
         <label for="aead-select">AEAD (both advertised in the key config)</label>
@@ -108,6 +115,7 @@ export function pipelinePanel(): string {
       <button type="button" class="btn btn-primary" id="run-btn">Run the exchange</button>
     </div>
     <div class="step-controls">
+      <button type="button" class="btn" id="play-btn" disabled>&#9654; Play all steps</button>
       <button type="button" class="btn" id="back-btn" disabled>&larr; Back</button>
       <button type="button" class="btn" id="next-btn" disabled>Next step &rarr;</button>
       <button type="button" class="btn" id="all-btn" disabled>Jump to end</button>

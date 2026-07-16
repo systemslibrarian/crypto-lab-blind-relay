@@ -28,23 +28,28 @@ RFC 5737 documentation placeholders. Security model: OHTTP's guarantee is *organ
 
 ## Exhibits
 
-1. **The knowledge split, live** — type a query, run a real exchange, and step it through
-   client → relay → gateway → target. Each party's card is populated from the actual bytes the
-   crypto yields that party: the relay's card shows genuine HPKE ciphertext, the gateway's shows
-   the genuine decryption, complete with what each party *cannot* know and why.
+1. **The knowledge split, live** — type a query (or a POST body), run a real exchange, and play or
+   step it through client → relay → gateway → target. Each party's card is populated from the
+   actual bytes the crypto yields that party: the relay's card shows genuine HPKE ciphertext, the
+   gateway's shows the genuine decryption, complete with what each party *cannot* know and why.
 2. **The collusion toggle** — the honest centerpiece. Relay and gateway compare notes: a plain
    JOIN over data each already holds recovers *who asked what*, instantly and completely. The
    cryptographic-result indicator and the privacy verdict are rendered separately — every AEAD
    verified, and privacy is BROKEN anyway.
-3. **Break it yourself** — take the relay's seat against the real verifier: decrypt with a key you
+3. **Correlation without collusion** — the quieter failure: four clients send four queries, and
+   you join the relay's log to the gateway's log on ciphertext *size* alone (the sizes are the
+   real encapsulation lengths — no key material touched). Then turn on RFC 9292 zero padding and
+   watch the join collapse into one anonymity set, while the copy stays honest that padding fixes
+   size, not timing.
+4. **Break it yourself** — take the relay's seat against the real verifier: decrypt with a key you
    generate (real `OpenError`), flip one ciphertext byte and watch the gateway fail closed, then
    borrow the gateway's leaked key and watch decryption *succeed* — rendered as the alarm it is.
-4. **Two directions, two key schedules** — the request rides full HPKE; the response derives from
+5. **Two directions, two key schedules** — the request rides full HPKE; the response derives from
    `context.Export("message/bhttp response")` + a fresh public nonce through plain HKDF, with the
    client's and gateway's independent derivations compared byte-for-byte.
-5. **OHTTP vs VPN vs Tor vs IT-PIR** — what each hides, from whom, under what assumption, at what
+6. **OHTTP vs VPN vs Tor vs IT-PIR** — what each hides, from whom, under what assumption, at what
    cost — honest that OHTTP has the *weakest* collusion story of the four.
-6. **Where you already use this** — Apple iCloud Private Relay (same split, MASQUE-based),
+7. **Where you already use this** — Apple iCloud Private Relay (same split, MASQUE-based),
    Firefox telemetry (OHTTP itself), Privacy Pass rate limiting. Named, not implemented.
 
 ## When to Use It
@@ -69,8 +74,9 @@ request through the split, flip the collusion switch, and mount the three relay-
   itself into a tracking cookie (RFC 9458 §7 requires key consistency).
 - **Identifying request content** — OHTTP anonymizes the envelope, not the letter; cookies or
   account tokens inside the request re-link everything.
-- **Traffic analysis** — one request in, one request out: a relay and gateway comparing timestamps
-  can correlate without "colluding" formally.
+- **Traffic analysis** — one request in, one request out: anyone reading both logs can correlate
+  by size and timing without the parties "colluding" formally — exhibit 3 performs the size join
+  live and shows BHTTP padding as the (partial) countermeasure.
 - **Malleability is not the risk** — flipping any byte fails closed (AEAD); a hostile relay can
   deny service but cannot read or undetectably alter.
 
@@ -90,7 +96,7 @@ git clone https://github.com/systemslibrarian/crypto-lab-blind-relay
 cd crypto-lab-blind-relay
 npm install
 npm run dev        # Vite dev server
-npm test           # 54 unit tests (Vitest)
+npm test           # 58 unit tests (Vitest)
 npm run build      # typecheck + production build
 npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
 ```
@@ -109,14 +115,16 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
 
 ## Build & Verify
 
-- **54 Vitest unit tests**, all passing: **15 known-answer tests against the RFC 9458 Appendix A
+- **58 Vitest unit tests**, all passing: **15 known-answer tests against the RFC 9458 Appendix A
   vector** (`src/ohttp/kat.test.ts` — key config bytes, BHTTP encodings, `info` construction,
   request decapsulation + ciphertext reproduction, response secret/salt/prk/key/nonce, and the
-  full encapsulated response), plus BHTTP round-trips and varint checks, fail-closed suites for
-  request/response/key-config parsing and tampering, and knowledge-split/collusion model tests.
-- **3 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
-  after driving the full demo), plus the teaching invariant — collusion renders BROKEN while the
-  crypto indicator stays factually valid.
+  full encapsulated response), plus BHTTP round-trips, varint and padding checks, fail-closed
+  suites for request/response/key-config parsing and tampering, knowledge-split/collusion model
+  tests, and the passive size-correlation model (join correct unpadded, ambiguous padded).
+- **4 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
+  after driving the full demo including the correlation exhibit), plus two teaching invariants —
+  collusion renders BROKEN while the crypto indicator stays factually valid, and the size join
+  identifies everyone unpadded but collapses to an anonymity set under padding.
 - Deploys via GitHub Actions Pages; unit tests and the accessibility gate block the deploy.
 
 ---

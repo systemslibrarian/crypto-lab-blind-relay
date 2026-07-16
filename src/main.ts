@@ -5,6 +5,7 @@ import { runExchange, type Exchange } from './relay/exchange';
 import { byId } from './ui/dom';
 import { pipelinePanel, renderParties, renderStepStatus, STEPS } from './ui/pipeline';
 import { collusionPanel, renderCollusion } from './ui/collusion';
+import { correlationPanel, wireCorrelation } from './ui/correlation';
 import { attackLeakedKey, attackTamper, attackWrongKey, breakItPanel } from './ui/breakit';
 import { renderSchedules, schedulePanel } from './ui/schedule';
 import { comparisonPanel, honestyPanel, introPanel, realWorldPanel } from './ui/statics';
@@ -25,6 +26,7 @@ byId('lab-main').innerHTML =
   introPanel() +
   pipelinePanel() +
   collusionPanel() +
+  correlationPanel() +
   breakItPanel() +
   schedulePanel() +
   comparisonPanel() +
@@ -32,6 +34,7 @@ byId('lab-main').innerHTML =
   honestyPanel();
 
 const runBtn = byId<HTMLButtonElement>('run-btn');
+const playBtn = byId<HTMLButtonElement>('play-btn');
 const backBtn = byId<HTMLButtonElement>('back-btn');
 const nextBtn = byId<HTMLButtonElement>('next-btn');
 const allBtn = byId<HTMLButtonElement>('all-btn');
@@ -65,25 +68,37 @@ function paint(): void {
 }
 
 async function run(): Promise<void> {
+  stopPlay();
   const query = byId<HTMLInputElement>('query-input').value.trim() || 'chest pain symptoms';
+  const method = byId<HTMLSelectElement>('method-select').value === 'POST' ? 'POST' : 'GET';
   const aeadId: AeadId =
     byId<HTMLSelectElement>('aead-select').value === '3' ? AEAD_CHACHA20_POLY1305 : AEAD_AES_128_GCM;
   runBtn.disabled = true;
   try {
     state.exchange = await runExchange(
-      {
-        method: 'GET',
-        authority: 'api.example.com',
-        path: `/search?q=${encodeURIComponent(query).replace(/%20/g, '+')}`,
-        headers: [],
-        content: new Uint8Array(0),
-        aeadId,
-      },
+      method === 'GET'
+        ? {
+            method,
+            authority: 'api.example.com',
+            path: `/search?q=${encodeURIComponent(query).replace(/%20/g, '+')}`,
+            headers: [],
+            content: new Uint8Array(0),
+            aeadId,
+          }
+        : {
+            method,
+            authority: 'api.example.com',
+            path: '/v1/submit',
+            headers: [['content-type', 'application/json']],
+            content: new TextEncoder().encode(JSON.stringify({ note: query })),
+            aeadId,
+          },
       { gatewayKeys },
     );
   } finally {
     runBtn.disabled = false;
   }
+  playBtn.disabled = false;
   state.step = 0;
   state.colluding = false;
   colludeSwitch.disabled = false;
@@ -94,19 +109,54 @@ async function run(): Promise<void> {
   paint();
 }
 
+// Auto-play: advances one step at a time so the chip visibly travels the
+// wire. Any manual navigation stops it; motion is CSS-gated behind
+// prefers-reduced-motion, so reduced-motion users get discrete updates.
+let playTimer: number | null = null;
+function stopPlay(): void {
+  if (playTimer !== null) {
+    window.clearInterval(playTimer);
+    playTimer = null;
+  }
+  playBtn.textContent = '▶ Play all steps';
+}
+playBtn.addEventListener('click', () => {
+  if (!state.exchange) return;
+  if (playTimer !== null) {
+    stopPlay();
+    return;
+  }
+  if (state.step >= STEPS.length - 1) state.step = 0;
+  paint();
+  playBtn.textContent = '⏸ Pause';
+  playTimer = window.setInterval(() => {
+    if (state.step >= STEPS.length - 1) {
+      stopPlay();
+      return;
+    }
+    state.step += 1;
+    paint();
+  }, 1600);
+});
+
 runBtn.addEventListener('click', () => void run());
 backBtn.addEventListener('click', () => {
+  stopPlay();
   state.step = Math.max(0, state.step - 1);
   paint();
 });
 nextBtn.addEventListener('click', () => {
+  stopPlay();
   state.step = Math.min(STEPS.length - 1, state.step + 1);
   paint();
 });
 allBtn.addEventListener('click', () => {
+  stopPlay();
   state.step = STEPS.length - 1;
   paint();
 });
+
+wireCorrelation(gatewayKeys);
 
 colludeSwitch.addEventListener('click', () => {
   if (!state.exchange) return;

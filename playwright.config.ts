@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173;
+// Overridable so local runs can dodge sibling labs' preview servers; CI uses the default.
+const PORT = Number(process.env.PW_PORT ?? 4173);
 const BASE = '/crypto-lab-blind-relay/';
 
 export default defineConfig({

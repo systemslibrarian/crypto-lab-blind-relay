@@ -18,6 +18,7 @@ import {
   decodeResponse,
   encodeRequest,
   encodeResponse,
+  padMessage,
 } from '../ohttp/bhttp';
 import { type KeyConfig } from '../ohttp/keyconfig';
 import {
@@ -52,6 +53,8 @@ export interface ExchangeInput {
   headers: [string, string][];
   content: Uint8Array;
   aeadId: AeadId;
+  /** Pad the BHTTP message to this many bytes before sealing (RFC 9292 §3.8). */
+  padTo?: number;
 }
 
 /** Everything a completed exchange produced, for the party views and pipeline. */
@@ -124,7 +127,8 @@ export async function runExchange(
     headers: input.headers,
     content: input.content,
   };
-  const bhttpRequest = encodeRequest(request);
+  const encoded = encodeRequest(request);
+  const bhttpRequest = input.padTo === undefined ? encoded : padMessage(encoded, input.padTo);
   const encRequest = await encapsulateRequest(keyConfig, bhttpRequest, input.aeadId, seeds?.ephemeralIkm);
 
   // — relay — forwards encRequest.encapsulated verbatim; holds no key material.

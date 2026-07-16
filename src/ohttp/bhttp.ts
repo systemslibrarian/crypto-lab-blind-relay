@@ -189,6 +189,23 @@ export function decodeRequest(bytes: Uint8Array): BhttpRequest {
   return { method, scheme, authority, path, headers, content };
 }
 
+/**
+ * Append zero-byte padding up to `totalLength` (RFC 9292 §3.8) — the length
+ * hiding OHTTP itself does not provide. Decoders skip trailing zeros, so a
+ * padded message decodes to the identical request; only the ciphertext size
+ * changes. This is the countermeasure the correlation exhibit demonstrates.
+ */
+export function padMessage(encoded: Uint8Array, totalLength: number): Uint8Array {
+  if (totalLength < encoded.length) {
+    throw new BhttpError(
+      `cannot pad to ${totalLength} bytes: message is already ${encoded.length} bytes`,
+    );
+  }
+  const out = new Uint8Array(totalLength);
+  out.set(encoded, 0);
+  return out;
+}
+
 /** Encode a known-length final response. Informational (1xx) responses are out of scope. */
 export function encodeResponse(res: BhttpResponse): Uint8Array {
   if (!Number.isInteger(res.status) || res.status < 200 || res.status > 599) {

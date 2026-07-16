@@ -125,8 +125,9 @@ export function honestyPanel(): string {
       decryption.</p>
       <p><strong>Simulated:</strong> the network. All four parties live in this one browser tab; the IP addresses
       are documentation-range placeholders standing in for what TCP would reveal. No packet leaves this page.</p>
-      <p><strong>What this does NOT prove:</strong> OHTTP does not hide message <em>timing or sizes</em> — a relay
-      and gateway comparing timestamps can correlate traffic without "colluding" in any formal sense. It does not
+      <p><strong>What this does NOT prove:</strong> OHTTP does not hide message <em>timing or sizes</em> — the
+      correlation exhibit above demonstrates the size half of that with real ciphertext lengths, and padding fixes
+      only the size half; timing correlation needs batching or mixing that OHTTP does not provide. It does not
       protect you if the request <em>content</em> identifies you (a logged-in cookie defeats the whole scheme —
       RFC 9458 requires requests carry no identifying state). It does not hide that you use OHTTP at all. And the
       non-collusion assumption is organizational: nothing cryptographic prevents the join you can perform above.</p>
