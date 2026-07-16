@@ -6,7 +6,7 @@
  * it collapse into an anonymity set — while timing honestly stays exposed.
  */
 import type { KeyPair } from '@hub/hpke/dhkem';
-import { type CrowdRun, joinBySize, runCrowd } from '../relay/correlation';
+import { type CrowdRun, joinBySize, joinByTiming, runCrowd } from '../relay/correlation';
 import { esc } from './dom';
 
 export const PAD_TO = 256;
@@ -24,16 +24,18 @@ export function correlationPanel(): string {
       <div class="ctl ctl-check">
         <label for="crowd-pad"><input type="checkbox" id="crowd-pad" /> Pad every request to ${PAD_TO} bytes (RFC 9292 §3.8)</label>
       </div>
-      <button type="button" class="btn" id="crowd-join" disabled>Join the two logs on size</button>
+      <button type="button" class="btn" id="crowd-join" disabled>Join the logs on size</button>
+      <button type="button" class="btn" id="crowd-join-time" disabled>Join the logs on timing</button>
     </div>
     <div id="crowd-out" role="status" aria-live="polite"></div>
     <details class="expert">
       <summary>What padding does and does not fix</summary>
       <p class="note">Zero padding is part of BHTTP itself: trailing zero bytes decode to the identical request,
-      so the gateway notices nothing while every ciphertext becomes the same length. That kills the size join.
-      It does <em>not</em> kill the timing join — with sparse traffic, "the only request in this second" is its
-      own identifier. Defeating timing needs batching or mixing, which OHTTP deliberately does not provide;
-      that trade is what separates it from Tor and mixnets in the comparison below.</p>
+      so the gateway notices nothing while every ciphertext becomes the same length. That kills the size join —
+      try both joins with padding on and off. It does <em>not</em> kill the timing join: with sparse traffic,
+      "the only request in that instant" is its own identifier, padded or not. Defeating timing needs batching
+      or mixing, which OHTTP deliberately does not provide; that trade is what separates it from Tor and
+      mixnets in the comparison below.</p>
     </details>
   </section>`;
 }
@@ -54,6 +56,7 @@ function logTables(run: CrowdRun): string {
       <div class="sched">
         <h3>Relay's access log (knows WHO)</h3>
         <table class="cmp log-table">
+          <caption class="sr-only">Relay access log: simulated arrival time, client IP, and real ciphertext size for each of the four requests</caption>
           <thead><tr><th scope="col">arrival*</th><th scope="col">client IP</th><th scope="col">ciphertext size</th></tr></thead>
           <tbody>${relayRows}</tbody>
         </table>
@@ -61,6 +64,7 @@ function logTables(run: CrowdRun): string {
       <div class="sched">
         <h3>Gateway's log (knows WHAT, sorted by size)</h3>
         <table class="cmp log-table">
+          <caption class="sr-only">Gateway log: simulated arrival time, real ciphertext size, and decrypted request line, sorted by size</caption>
           <thead><tr><th scope="col">arrival*</th><th scope="col">ciphertext size</th><th scope="col">decrypted request</th></tr></thead>
           <tbody>${gatewayRows}</tbody>
         </table>
@@ -117,12 +121,46 @@ export function renderJoin(out: HTMLElement, run: CrowdRun): void {
      </div>`;
 }
 
-export type CrowdRunner = (padTo?: number) => Promise<CrowdRun>;
+export function renderTimingJoin(out: HTMLElement, run: CrowdRun): void {
+  const timing = joinByTiming(run);
+  const rows = timing.matched
+    .map(
+      (m) =>
+        `<li class="fact"><span class="fact-label">gateway arrival ${m.deltaMs} ms after a lone relay arrival</span>
+         <span class="fact-value mono">${esc(m.clientIp)} → ${esc(m.requestLine)}</span></li>`,
+    )
+    .join('');
+  const broken = timing.matched.length > 0;
+  const padded = run.padTo !== undefined;
+  out.innerHTML =
+    logTables(run) +
+    `<h3>Timing join result — no key material, no sizes used</h3>
+     <ul class="facts" role="list">${rows}</ul>
+     <div class="verdicts">
+       <div class="verdict verdict-neutral">
+         <span class="verdict-kicker">Cryptographic result</span>
+         <span class="verdict-body">Every request stayed encrypted end to end — the clock did all the work.</span>
+       </div>
+       <div class="verdict ${broken ? 'verdict-alarm' : 'verdict-ok'}">
+         <span class="verdict-kicker">Privacy verdict</span>
+         <span class="verdict-body">${
+           broken
+             ? `✗ BROKEN for ${timing.matched.length} of ${run.relayLog.length} clients — matched by arrival time alone${
+                 padded ? '; padding fixed the sizes and changed nothing here' : ''
+               }.`
+             : '✓ arrivals overlap — timing alone cannot separate them.'
+         }</span>
+       </div>
+     </div>
+     <p class="note">Sparse traffic makes each message "the only request in that instant." The countermeasure is
+     batching or mixing — a cost OHTTP explicitly declines to pay (see the Tor and IT-PIR columns below).</p>`;
+}
 
 /** Wire the exhibit; crypto runs through the same session gateway keys. */
 export function wireCorrelation(gatewayKeys: KeyPair): void {
   const btn = document.getElementById('crowd-btn') as HTMLButtonElement;
   const joinBtn = document.getElementById('crowd-join') as HTMLButtonElement;
+  const joinTimeBtn = document.getElementById('crowd-join-time') as HTMLButtonElement;
   const pad = document.getElementById('crowd-pad') as HTMLInputElement;
   const out = document.getElementById('crowd-out') as HTMLElement;
   let run: CrowdRun | null = null;
@@ -133,6 +171,7 @@ export function wireCorrelation(gatewayKeys: KeyPair): void {
         run = await runCrowd(gatewayKeys, pad.checked ? PAD_TO : undefined);
         renderCrowd(out, run);
         joinBtn.disabled = false;
+        joinTimeBtn.disabled = false;
       } finally {
         btn.disabled = false;
       }
@@ -141,10 +180,14 @@ export function wireCorrelation(gatewayKeys: KeyPair): void {
   joinBtn.addEventListener('click', () => {
     if (run) renderJoin(out, run);
   });
+  joinTimeBtn.addEventListener('click', () => {
+    if (run) renderTimingJoin(out, run);
+  });
   pad.addEventListener('change', () => {
     // A padding change invalidates the current crowd — force a fresh run.
     run = null;
     joinBtn.disabled = true;
+    joinTimeBtn.disabled = true;
     out.innerHTML = `<p class="note">Padding ${pad.checked ? 'ON' : 'OFF'} — simulate the crowd again to see the effect.</p>`;
   });
 }

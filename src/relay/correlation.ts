@@ -94,6 +94,38 @@ export interface SizeJoin {
   ambiguous: { size: number; clientIps: string[]; requestLines: string[] }[];
 }
 
+export interface TimingJoin {
+  /** Matches recovered from the clock alone — works regardless of padding. */
+  matched: { clientIp: string; requestLine: string; deltaMs: number }[];
+  /** Gateway entries with zero or multiple relay candidates inside the window. */
+  unmatched: string[];
+  windowMs: number;
+}
+
+/**
+ * The second passive attack: match each gateway arrival to the relay arrival
+ * just before it. Padding is powerless here — with sparse traffic, "the only
+ * request in that instant" is its own identifier. (The clock is the exhibit's
+ * one simulated value, and the UI labels it as such.)
+ */
+export function joinByTiming(run: CrowdRun, windowMs = 5): TimingJoin {
+  const matched: TimingJoin['matched'] = [];
+  const unmatched: string[] = [];
+  for (const g of run.gatewayLog) {
+    const candidates = run.relayLog.filter((r) => g.at - r.at > 0 && g.at - r.at <= windowMs);
+    if (candidates.length === 1) {
+      matched.push({
+        clientIp: candidates[0].clientIp,
+        requestLine: g.requestLine,
+        deltaMs: g.at - candidates[0].at,
+      });
+    } else {
+      unmatched.push(g.requestLine);
+    }
+  }
+  return { matched, unmatched, windowMs };
+}
+
 /** The passive attack: JOIN the two logs on ciphertext size. No key material used. */
 export function joinBySize(run: CrowdRun): SizeJoin {
   const sizes = new Map<number, { relay: RelayLogEntry[]; gateway: GatewayLogEntry[] }>();

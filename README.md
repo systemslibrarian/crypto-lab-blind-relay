@@ -37,10 +37,10 @@ RFC 5737 documentation placeholders. Security model: OHTTP's guarantee is *organ
    cryptographic-result indicator and the privacy verdict are rendered separately — every AEAD
    verified, and privacy is BROKEN anyway.
 3. **Correlation without collusion** — the quieter failure: four clients send four queries, and
-   you join the relay's log to the gateway's log on ciphertext *size* alone (the sizes are the
-   real encapsulation lengths — no key material touched). Then turn on RFC 9292 zero padding and
-   watch the join collapse into one anonymity set, while the copy stays honest that padding fixes
-   size, not timing.
+   you join the relay's log to the gateway's log two ways. On ciphertext *size* (the real
+   encapsulation lengths — no key material touched), RFC 9292 zero padding collapses the join into
+   one anonymity set. On *timing*, padding changes nothing and everyone is identified again — the
+   honest demonstration that the remaining fix (batching/mixing) is a cost OHTTP declines to pay.
 4. **Break it yourself** — take the relay's seat against the real verifier: decrypt with a key you
    generate (real `OpenError`), flip one ciphertext byte and watch the gateway fail closed, then
    borrow the gateway's leaked key and watch decryption *succeed* — rendered as the alarm it is.
@@ -96,7 +96,7 @@ git clone https://github.com/systemslibrarian/crypto-lab-blind-relay
 cd crypto-lab-blind-relay
 npm install
 npm run dev        # Vite dev server
-npm test           # 58 unit tests (Vitest)
+npm test           # 60 unit tests (Vitest)
 npm run build      # typecheck + production build
 npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
 ```
@@ -115,16 +115,17 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
 
 ## Build & Verify
 
-- **58 Vitest unit tests**, all passing: **15 known-answer tests against the RFC 9458 Appendix A
+- **60 Vitest unit tests**, all passing: **15 known-answer tests against the RFC 9458 Appendix A
   vector** (`src/ohttp/kat.test.ts` — key config bytes, BHTTP encodings, `info` construction,
   request decapsulation + ciphertext reproduction, response secret/salt/prk/key/nonce, and the
   full encapsulated response), plus BHTTP round-trips, varint and padding checks, fail-closed
   suites for request/response/key-config parsing and tampering, knowledge-split/collusion model
-  tests, and the passive size-correlation model (join correct unpadded, ambiguous padded).
+  tests, and the passive correlation models — size join (correct unpadded, ambiguous padded) and
+  timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap).
 - **4 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
-  after driving the full demo including the correlation exhibit), plus two teaching invariants —
-  collusion renders BROKEN while the crypto indicator stays factually valid, and the size join
-  identifies everyone unpadded but collapses to an anonymity set under padding.
+  after driving the full demo including both correlation joins), plus two teaching invariants —
+  collusion renders BROKEN while the crypto indicator stays factually valid, and padding beats
+  the size join while the timing join still identifies everyone.
 - Deploys via GitHub Actions Pages; unit tests and the accessibility gate block the deploy.
 
 ---

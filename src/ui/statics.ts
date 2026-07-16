@@ -28,7 +28,7 @@ export function comparisonPanel(): string {
     from whom, and — most importantly — in what you have to <em>assume</em> for the guarantee to hold.</p>
     <div class="cmp-wrap" role="region" aria-label="Comparison of privacy architectures" tabindex="0">
       <table class="cmp">
-        <caption class="note" style="text-align:left;padding:0 0 .4rem">Trust assumptions compared — weakest assumption highlighted per column.</caption>
+        <caption class="note" style="text-align:left;padding:0 0 .4rem">Trust assumptions compared — the row that decides everything is what you must assume.</caption>
         <thead>
           <tr>
             <th scope="col">Property</th>

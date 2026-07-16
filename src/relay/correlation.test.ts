@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateKeyPair } from '@hub/hpke/dhkem';
 import { decodeRequest, padMessage } from '../ohttp/bhttp';
-import { CROWD_IPS, CROWD_QUERIES, joinBySize, runCrowd } from './correlation';
+import { CROWD_IPS, CROWD_QUERIES, joinBySize, joinByTiming, runCrowd } from './correlation';
 
 const PAD_TO = 256;
 
@@ -33,6 +33,32 @@ describe('correlation without collusion', () => {
     expect(join.matched).toHaveLength(0);
     expect(join.ambiguous).toHaveLength(1);
     expect(join.ambiguous[0].clientIps).toHaveLength(CROWD_QUERIES.length);
+  });
+
+  it('timing join identifies everyone even when padding defeats the size join', async () => {
+    const run = await runCrowd(generateKeyPair(), PAD_TO);
+    expect(joinBySize(run).matched).toHaveLength(0); // size is dead...
+    const timing = joinByTiming(run);
+    expect(timing.matched).toHaveLength(CROWD_QUERIES.length); // ...timing is not
+    expect(timing.unmatched).toHaveLength(0);
+    // And the recovered pairs are the TRUE pairs.
+    for (const [i, x] of run.exchanges.entries()) {
+      const m = timing.matched.find((p) => p.clientIp === CROWD_IPS[i]);
+      expect(m?.requestLine).toBe(`GET ${x.requestAsSeenByGateway.path}`);
+    }
+  });
+
+  it('timing join reports ambiguity instead of guessing when arrivals overlap', async () => {
+    const run = await runCrowd(generateKeyPair(), PAD_TO);
+    // Force every message to "arrive" in the same instant — a crude batch.
+    const batched = {
+      ...run,
+      relayLog: run.relayLog.map((r) => ({ ...r, at: 0 })),
+      gatewayLog: run.gatewayLog.map((g) => ({ ...g, at: 2 })),
+    };
+    const timing = joinByTiming(batched);
+    expect(timing.matched).toHaveLength(0);
+    expect(timing.unmatched).toHaveLength(CROWD_QUERIES.length);
   });
 
   it('padding does not change what the gateway reads', async () => {

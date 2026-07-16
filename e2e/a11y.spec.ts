@@ -25,6 +25,8 @@ async function prepare(page: Page): Promise<void> {
   await expect(page.locator('#crowd-join')).toBeEnabled();
   await page.locator('#crowd-join').click();
   await expect(page.locator('#crowd-out .verdicts')).toBeVisible();
+  await page.locator('#crowd-join-time').click();
+  await expect(page.locator('#crowd-out .verdicts')).toBeVisible();
   await page.evaluate(() => {
     document.querySelectorAll('details').forEach((d) => (d.open = true));
   });
@@ -66,6 +68,10 @@ test('the demo teaches: size correlates without collusion, padding restores the 
   await page.locator('#crowd-btn').click();
   await page.locator('#crowd-join').click();
   await expect(page.locator('#crowd-out .verdict-ok')).toContainText('anonymity set');
+  // Padding beat the size join — the timing join must still identify everyone.
+  await page.locator('#crowd-join-time').click();
+  await expect(page.locator('#crowd-out .verdict-alarm')).toContainText('arrival time alone');
+  await expect(page.locator('#crowd-out .verdict-alarm')).toContainText('padding fixed the sizes');
 });
 
 test('the demo teaches: collusion breaks privacy while crypto stays valid', async ({ page }) => {

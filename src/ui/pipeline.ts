@@ -173,8 +173,9 @@ export function renderParties(container: HTMLElement, x: Exchange | null, step: 
                 </li>`,
               )
               .join('');
-      return `<article class="party${active ? ' active' : ''}" aria-label="${esc(meta.addr)}">
-        <h3><span aria-hidden="true">${meta.emoji}</span> ${party.charAt(0).toUpperCase() + party.slice(1)}</h3>
+      const title = party.charAt(0).toUpperCase() + party.slice(1);
+      return `<article class="party${active ? ' active' : ''}" aria-label="${esc(`${title} — ${meta.addr}${active ? ' (message is here)' : ''}`)}">
+        <h3><span aria-hidden="true">${meta.emoji}</span> ${title}</h3>
         <p class="addr">${esc(meta.addr)}</p>
         <p class="role-note">${esc(meta.role)}</p>
         <ul class="facts" role="list">${facts}</ul>
