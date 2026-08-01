@@ -63,9 +63,13 @@ export function renderCollusion(out: HTMLElement, x: Exchange, on: boolean): voi
         <span class="verdict-kicker">Cryptographic result</span>
         <span class="verdict-body">Every HPKE seal/open verified — the mathematics did exactly what it promises.</span>
       </div>
-      <div class="verdict verdict-alarm">
+      <div class="verdict ${record.complete ? 'verdict-alarm' : 'verdict-ok'}">
         <span class="verdict-kicker">Privacy verdict</span>
-        <span class="verdict-body">✗ BROKEN — ${esc(record.who)} asked "${esc(record.what)}". Complete and instant; the crypto never noticed.</span>
+        <span class="verdict-body">${
+          record.complete
+            ? `✗ BROKEN — ${esc(record.who)} asked "${esc(record.what)}". Complete and instant; the crypto never noticed.`
+            : '✓ the join returned no linked row — neither column carried the fact it needed.'
+        }</span>
       </div>
     </div>
     <p class="note">This is the whole lesson: encryption was never the guarantee here. The guarantee was two

@@ -6,6 +6,7 @@
  */
 import { bytesToHex } from '@hub/hpke/bytes';
 import { generateKeyPair } from '@hub/hpke/dhkem';
+import { decodeRequest } from '../ohttp/bhttp';
 import { decapsulateRequest } from '../ohttp/request';
 import type { Exchange } from '../relay/exchange';
 import { esc, hexPretty } from './dom';
@@ -42,10 +43,14 @@ function verdicts(crypto: string, verdictOk: boolean, verdict: string): string {
 
 export async function attackWrongKey(out: HTMLElement, x: Exchange): Promise<void> {
   const guess = generateKeyPair();
+  // `opened` records what the real decapsulation did; every line below —
+  // including both verdicts — is derived from it. Nothing here is a constant
+  // that would survive the AEAD failing to fail.
+  let opened = false;
   let errText = '';
   try {
     await decapsulateRequest(x.encRequest.encapsulated, x.keyConfig, guess.sk);
-    errText = '(unreachable — decryption with a wrong key succeeded, which would be a broken AEAD)';
+    opened = true;
   } catch (e) {
     errText = `${(e as Error).name}: ${(e as Error).message}`;
   }
@@ -53,15 +58,27 @@ export async function attackWrongKey(out: HTMLElement, x: Exchange): Promise<voi
     <div class="attack-out">
       <p>You generated a fresh X25519 key and ran the gateway's exact decapsulation code on the bytes you carry:</p>
       <p class="mono note">your key: ${esc(hexPretty(bytesToHex(guess.sk)))}</p>
-      <p class="err">${esc(errText)}</p>
+      ${
+        opened
+          ? `<p class="err">A key that is not the gateway's opened the request.</p>`
+          : `<p class="err">${esc(errText)}</p>`
+      }
       <p class="note">The DH with the wrong private key derives a different shared secret, so the AEAD tag cannot
       verify. Note the error carries no detail — a wrong key, a tampered header, and a flipped ciphertext byte are
       deliberately indistinguishable.</p>
-      ${verdicts(
-        'AEAD tag did not verify — decryption failed.',
-        true,
-        'HOLDS — the relay position learns nothing without the gateway key.',
-      )}
+      ${
+        opened
+          ? verdicts(
+              'Decryption SUCCEEDED under a key the gateway never held — the AEAD did not fail closed.',
+              false,
+              'BROKEN — this outcome should be impossible; treat this build as defective, not as a lesson.',
+            )
+          : verdicts(
+              'AEAD tag did not verify — decryption failed.',
+              true,
+              'HOLDS — the relay position learns nothing without the gateway key.',
+            )
+      }
     </div>`;
 }
 
@@ -69,10 +86,11 @@ export async function attackTamper(out: HTMLElement, x: Exchange): Promise<void>
   const bytes = x.encRequest.encapsulated.slice();
   const idx = 7 + 32 + Math.floor(Math.random() * (bytes.length - 39));
   bytes[idx] ^= 0x01;
+  let opened = false;
   let errText = '';
   try {
     await decapsulateRequest(bytes, x.keyConfig, x.gatewayKeys.sk);
-    errText = '(unreachable — a tampered ciphertext opened, which would be a broken AEAD)';
+    opened = true;
   } catch (e) {
     errText = `${(e as Error).name}: ${(e as Error).message}`;
   }
@@ -80,20 +98,36 @@ export async function attackTamper(out: HTMLElement, x: Exchange): Promise<void>
     <div class="attack-out">
       <p>You flipped the low bit of byte ${idx} (inside the ciphertext) and forwarded it. The real gateway,
       with the real key, tried to open it:</p>
-      <p class="err">${esc(errText)}</p>
+      ${
+        opened
+          ? `<p class="err">The tampered message opened anyway.</p>`
+          : `<p class="err">${esc(errText)}</p>`
+      }
       <p class="note">The request is dropped; no partial plaintext ever exists. A relay can always destroy
       traffic (it carries it) — what it cannot do is read it or alter it undetected.</p>
-      ${verdicts(
-        'AEAD tag did not verify — the gateway rejected the message.',
-        true,
-        'HOLDS — tampering is detected and fails closed; nothing leaked.',
-      )}
+      ${
+        opened
+          ? verdicts(
+              'A modified ciphertext still opened — the AEAD tag did not reject the tamper.',
+              false,
+              'BROKEN — this outcome should be impossible; treat this build as defective, not as a lesson.',
+            )
+          : verdicts(
+              'AEAD tag did not verify — the gateway rejected the message.',
+              true,
+              'HOLDS — tampering is detected and fails closed; nothing leaked.',
+            )
+      }
     </div>`;
 }
 
 export async function attackLeakedKey(out: HTMLElement, x: Exchange): Promise<void> {
   const result = await decapsulateRequest(x.encRequest.encapsulated, x.keyConfig, x.gatewayKeys.sk);
-  const text = `${x.requestAsSeenByGateway.method} https://${x.requestAsSeenByGateway.authority}${x.requestAsSeenByGateway.path}`;
+  // Decode what THIS decapsulation produced, not what the earlier exchange
+  // recorded — the request line below is the output of the attack, not a
+  // replay of the gateway's own view.
+  const recovered = decodeRequest(result.plaintext);
+  const text = `${recovered.method} ${recovered.scheme}://${recovered.authority}${recovered.path}`;
   out.innerHTML = `
     <div class="attack-out">
       <p>Now suppose the gateway hands its private key to the relay (or one company quietly runs both).

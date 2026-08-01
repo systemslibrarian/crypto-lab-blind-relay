@@ -115,7 +115,7 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
 
 ## Build & Verify
 
-- **60 Vitest unit tests**, all passing: **15 known-answer tests against the RFC 9458 Appendix A
+- **60 Vitest unit tests**, all passing: **17 known-answer tests against the RFC 9458 Appendix A
   vector** (`src/ohttp/kat.test.ts` — key config bytes, BHTTP encodings, `info` construction,
   request decapsulation + ciphertext reproduction, response secret/salt/prk/key/nonce, and the
   full encapsulated response), plus BHTTP round-trips, varint and padding checks, fail-closed
