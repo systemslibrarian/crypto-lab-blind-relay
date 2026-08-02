@@ -11,6 +11,9 @@
   --surface: #1d1529;
   --surface-2: #271c38;
   --border: #453558;
+  /* Text-entry control boundaries: >= 3:1 vs both the field fill and the
+     surrounding surface (WCAG 1.4.11). Decorative borders stay subtle. */
+  --ctl-border: #7f6fa0;
   --text: #ece7f6;
   --text-dim: #b4a8cb;
   --accent-text: #cfa9ff;
@@ -27,6 +30,7 @@ html[data-theme='light'] {
   --surface: #ffffff;
   --surface-2: #eee9f7;
   --border: #c9bede;
+  --ctl-border: #786d96;
   --text: #221836;
   --text-dim: #554570;
   --accent-text: #6d28d9;
@@ -137,7 +141,7 @@ body {
 }
 .ctl input[type='text'], .ctl select {
   background-color: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--ctl-border);
   color: var(--text);
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
