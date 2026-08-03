@@ -122,10 +122,18 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
   suites for request/response/key-config parsing and tampering, knowledge-split/collusion model
   tests, and the passive correlation models — size join (correct unpadded, ambiguous padded) and
   timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap).
-- **4 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
-  after driving the full demo including both correlation joins), plus two teaching invariants —
-  collusion renders BROKEN while the crypto indicator stays factually valid, and padding beats
-  the size join while the timing join still identifies everyone.
+- **18 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
+  after driving the full demo including both correlation joins), a text-control border contrast
+  check in both themes, two teaching invariants (collusion renders BROKEN while the crypto
+  indicator stays factually valid; padding beats the size join while the timing join still
+  identifies everyone), and a **claims suite** (`e2e/claims.spec.ts`) asserting every headline
+  verdict against values the page itself computed: the relay's ciphertext is byte-identical to the
+  client's sealed request, the wire header is the header bound into `info`, `salt` is literally
+  `enc ‖ response_nonce`, the response nonce is the prefix of the response on the wire, the padded
+  crowd's wire size equals the pad target plus the overhead a different exhibit displayed, the
+  leaked-key attack reproduces the client's BHTTP bytes exactly, both fail-closed attacks reach a
+  real `OpenError` and say why, the collusion join quotes the relay's WHO and the gateway's WHAT,
+  and every correlation counter matches the log rows it claims to summarise.
 - Deploys via GitHub Actions Pages; unit tests and the accessibility gate block the deploy.
 
 ---
