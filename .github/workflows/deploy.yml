@@ -18,13 +18,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # This lab CONSUMES the hub's HPKE module (crypto-lab-hpke-envelope)
       # rather than forking it. actions/checkout can only write inside the
       # workspace, so it lands in ./hub/ — vite.config.ts and tsconfig.json
       # look there when the local sibling checkout is absent.
       - name: Check out the hub HPKE module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: systemslibrarian/crypto-lab-hpke-envelope
           path: hub/crypto-lab-hpke-envelope
