@@ -98,7 +98,7 @@ npm install
 npm run dev        # Vite dev server
 npm test           # 60 unit tests (Vitest)
 npm run build      # typecheck + production build
-npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
+npm run test:a11y  # WCAG 2.1 A/AA gate, 2 themes x 2 viewports (Playwright)
 ```
 
 (CI checks the hub out into `./hub/` instead; `vite.config.ts` looks in both places.)
@@ -122,9 +122,18 @@ npm run test:a11y  # axe-core WCAG 2.1 A/AA gate, both themes (Playwright)
   suites for request/response/key-config parsing and tampering, knowledge-split/collusion model
   tests, and the passive correlation models — size join (correct unpadded, ambiguous padded) and
   timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap).
-- **18 Playwright e2e tests**: zero axe-core WCAG 2.1 A/AA violations in **both** themes (scanned
-  after driving the full demo including both correlation joins), a text-control border contrast
-  check in both themes, two teaching invariants (collusion renders BROKEN while the crypto
+- **16 Playwright e2e tests**: a WCAG 2.1 A/AA gate that drives the lab the way a visitor drives it
+  — an exchange sealed and walked through all nine pipeline steps, auto-play started and paused,
+  collusion flipped on and off, four clients simulated and joined on size and on timing with padding
+  off and then on, all three attacks fired, the request re-run as a POST under ChaCha20-Poly1305,
+  and every disclosure opened by its own summary — and **scans after every single step**, in both
+  themes at 1280px and 380px. Nothing is injected into the page: reduced motion is asked for and
+  asserted, so the lab's own `prefers-reduced-motion` handling is exercised rather than bypassed.
+  `violations` is not the whole oracle — the gate also fails on axe's `incomplete` bucket, on an
+  arithmetic composite-aware contrast measurement (opacity and `color-mix()` included), on
+  text-control border contrast (WCAG 1.4.11), on any scrolling region with no keyboard route, on any
+  horizontal document overflow, and on any visible text left at `opacity: 0`. Alongside it, two
+  teaching invariants (collusion renders BROKEN while the crypto
   indicator stays factually valid; padding beats the size join while the timing join still
   identifies everyone), and a **claims suite** (`e2e/claims.spec.ts`) asserting every headline
   verdict against values the page itself computed: the relay's ciphertext is byte-identical to the

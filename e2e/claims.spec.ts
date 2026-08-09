@@ -24,7 +24,10 @@ async function dumpParties(page: Page): Promise<PartyDump[]> {
   return page.evaluate(() =>
     Array.from(document.querySelectorAll('#parties article.party')).map((a) => ({
       title: (a.querySelector('h3')?.textContent ?? '').trim(),
-      knows: Array.from(a.querySelectorAll('li.fact:not(.fact-cannot)')).map((li) => ({
+      // `.fact-none` is the placeholder a card shows when the message has not
+      // reached that party yet — it is the ABSENCE of a fact, not a fact, and
+      // it exists so the `role="list"` is never empty (aria-required-children).
+      knows: Array.from(a.querySelectorAll('li.fact:not(.fact-cannot):not(.fact-none)')).map((li) => ({
         label: (li.querySelector('.fact-label')?.textContent ?? '').replace(/^[\s\S]*?knows:\s*/, '').trim(),
         value: (li.querySelector('.fact-value')?.textContent ?? '').trim(),
       })),

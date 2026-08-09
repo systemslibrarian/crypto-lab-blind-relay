@@ -139,9 +139,25 @@ export function pipelinePanel(): string {
   </section>`;
 }
 
+/**
+ * The status line names what is on the wire, not only which step it is.
+ *
+ * The `.wire` strip that draws the travelling chip is `aria-hidden` — correctly,
+ * since it is a position marker and each party's `aria-label` already says
+ * "(message is here)". But the chip's LABEL is not a position, it is the form
+ * the message currently takes ("BHTTP bytes", "hdr ‖ enc ‖ ct"), and that
+ * appeared nowhere else: hidden from assistive technology by the `aria-hidden`,
+ * and hidden from every phone visitor by the `@media (max-width: 900px)` rule
+ * that sets `.wire { display: none }`. Printing it here puts it in the
+ * `role="status"` line the same repaint writes, so the strip is genuinely
+ * redundant and the fact survives on a narrow screen.
+ */
 export function renderStepStatus(step: number): string {
   const s = STEPS[step];
-  return `Step ${step + 1} of ${STEPS.length} — <strong>${esc(s.title)}</strong>: ${esc(s.desc)}`;
+  return (
+    `Step ${step + 1} of ${STEPS.length} — <strong>${esc(s.title)}</strong>: ${esc(s.desc)} ` +
+    `<span class="step-wire">On the wire: <code>${esc(s.chip)}</code></span>`
+  );
 }
 
 export function renderParties(container: HTMLElement, x: Exchange | null, step: number): void {
@@ -152,9 +168,9 @@ export function renderParties(container: HTMLElement, x: Exchange | null, step: 
       const meta = PARTY_META[party];
       const view = views?.find((v) => v.party === party);
       const active = x !== null && STEPS[step].at === i;
-      const facts =
+      const rows =
         view === undefined
-          ? `<li class="fact"><span class="fact-label">nothing yet</span><span class="fact-value">runs when you start an exchange</span></li>`
+          ? `<li class="fact fact-none"><span class="fact-label">nothing yet</span><span class="fact-value">runs when you start an exchange</span></li>`
           : view.knows
               .filter((f) => f.stage <= step)
               .map(
@@ -173,6 +189,17 @@ export function renderParties(container: HTMLElement, x: Exchange | null, step: 
                 </li>`,
               )
               .join('');
+      // A party that the message has not reached yet has no facts at this step,
+      // and an empty list is two problems at once: the card renders as a bare
+      // heading over blank space with no explanation of why, and a `role="list"`
+      // that owns no `listitem` fails `aria-required-children` on every step
+      // before the message arrives (axe files that under `incomplete`, so it
+      // never reaches the violations array a gate usually asserts on). Say what
+      // the emptiness means instead.
+      const facts =
+        rows === ''
+          ? `<li class="fact fact-none"><span class="fact-label">nothing yet</span><span class="fact-value">the message has not reached this party at this step</span></li>`
+          : rows;
       const title = party.charAt(0).toUpperCase() + party.slice(1);
       return `<article class="party${active ? ' active' : ''}" aria-label="${esc(`${title} — ${meta.addr}${active ? ' (message is here)' : ''}`)}">
         <h3><span aria-hidden="true">${meta.emoji}</span> ${title}</h3>

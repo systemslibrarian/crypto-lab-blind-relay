@@ -99,7 +99,13 @@ body {
 .cl-hero-title{margin:0;font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700;line-height:1.1;letter-spacing:.01em;}
 .cl-hero-sub{margin:.4rem 0 0;font-size:clamp(.9rem,1.6vw,1.05rem);letter-spacing:.01em;opacity:.85;}
 .cl-hero-desc{margin:.55rem 0 0;font-size:1rem;line-height:1.5;color:var(--text-dim);max-width:60ch;}
-.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--accent) 6%,transparent);}
+/* box-sizing is border-box because the narrow-viewport rule below gives this
+   aside `width: 100%`, and this stylesheet sets no global box-sizing. Under the
+   default content-box that 100% is the CONTENT width, so the 1.05rem side
+   padding and 1px borders land OUTSIDE it: at 380px the aside measured 384px
+   inside a 348px column, the flex line grew to match, and the whole DOCUMENT
+   scrolled 20px sideways (WCAG 1.4.10). */
+.cl-hero-why{box-sizing:border-box;flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--accent) 6%,transparent);}
 .cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;}
 .cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
 @media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}.cl-hero-main{flex-basis:auto;min-width:0;}}
@@ -188,6 +194,9 @@ body {
 .step-controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.8rem 0; }
 .step-status { font-size: 0.95rem; }
 .step-status strong { color: var(--accent-text); }
+/* Names the message form the (aria-hidden, desktop-only) wire chip shows, so
+   the fact survives both assistive technology and the 900px breakpoint. */
+.step-wire { display: inline-block; color: var(--text-dim); }
 
 /* ---- Party grid (the knowledge split) ---- */
 .parties {
@@ -228,6 +237,9 @@ body {
   overflow-wrap: anywhere;
 }
 .fact-cannot { border-style: dashed; }
+/* The absence of a fact, not a fact: shown when the message has not reached
+   this party yet. Dimmed by LIGHTNESS via --text-dim, never by opacity. */
+.fact-none .fact-value { color: var(--text-dim); }
 .fact-cannot .fact-label { color: var(--alarm-text); }
 .fact-cannot .fact-reason { color: var(--text-dim); font-size: 0.78rem; }
 
@@ -375,6 +387,16 @@ body {
 .cmp-wrap { overflow: auto; margin-top: 0.8rem; }
 table.cmp { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 720px; }
 .cmp th, .cmp td { border: 1px solid var(--border); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
+/* Cells carry unbreakable tokens — the gateway log prints whole request lines
+   like `GET https://api.example.com/search?q=chest+pain+symptoms`, which offers
+   no soft wrap opportunity, so its full width became the log table's
+   min-content width. At 380px that made `.log-table` 519px inside a 348px
+   column and pushed the document to 571px (WCAG 1.4.10). `anywhere`, not
+   `break-word`: `break-word` breaks the token when it is laid out but still
+   contributes the UNBROKEN token to min-content, so the table would stay
+   exactly as wide. The architecture comparison above is unaffected either way —
+   it declares `min-width: 720px` and scrolls inside `.cmp-wrap`. */
+.cmp th, .cmp td { overflow-wrap: anywhere; }
 .cmp th { background-color: var(--surface-2); }
 .cmp td { background-color: var(--surface); }
 .cmp .this-row th, .cmp .this-row td { border-color: var(--accent-text); }
