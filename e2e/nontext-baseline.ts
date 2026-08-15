@@ -20,7 +20,6 @@ export const NONTEXT_BASELINE: Record<
   "control-boundary|button#attack-tamper.btn": { ratio: 1.6, required: 3.0, unverified: false },
   "control-boundary|button#attack-wrongkey.btn": { ratio: 1.6, required: 3.0, unverified: false },
   "control-boundary|button#back-btn.btn": { ratio: 1.6, required: 3.0, unverified: false },
-  "control-boundary|button#cl-theme-toggle.cl-btn.cl-icon": { ratio: 1.29, required: 3.0, unverified: false },
   "control-boundary|button#collude-switch.switch": { ratio: 1.6, required: 3.0, unverified: false },
   "control-boundary|button#crowd-join-time.btn": { ratio: 1.6, required: 3.0, unverified: false },
   "control-boundary|button#crowd-join.btn": { ratio: 1.6, required: 3.0, unverified: false },
