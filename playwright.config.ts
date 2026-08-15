@@ -1,7 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Overridable so local runs can dodge sibling labs' preview servers; CI uses the default.
-const PORT = Number(process.env.PW_PORT ?? 4173);
+// Must be unique across the crypto-lab fleet. `reuseExistingServer` adopts
+// whatever already listens here, so a shared port means this suite can scan a
+// sibling lab's page and report its findings as ours. The old default was
+// 4173 — vite preview's own default, so it collided not with one named lab
+// but with any of the 170+ that had not been assigned a port, and with any
+// stray `vite preview` on this machine. PW_PORT stays as a local escape
+// hatch; it was never the fix, because what has to be unique is the
+// committed default.
+const PORT = Number(process.env.PW_PORT ?? 4678);
 const BASE = '/crypto-lab-blind-relay/';
 
 export default defineConfig({
