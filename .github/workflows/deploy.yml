@@ -18,17 +18,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # This lab CONSUMES the hub's HPKE module (crypto-lab-hpke-envelope)
       # rather than forking it. actions/checkout can only write inside the
       # workspace, so it lands in ./hub/ — vite.config.ts and tsconfig.json
       # look there when the local sibling checkout is absent.
       - name: Check out the hub HPKE module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: systemslibrarian/crypto-lab-hpke-envelope
           path: hub/crypto-lab-hpke-envelope
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -39,7 +39,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Accessibility gate (axe-core, WCAG A/AA, both themes)
         run: npm run test:a11y
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -51,4 +51,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
