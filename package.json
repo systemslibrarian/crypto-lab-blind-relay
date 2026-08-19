@@ -18,11 +18,11 @@
     "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
-    "@playwright/test": "^1.61.1",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
     "typescript": "^5.7.3",
     "vite": "^8.2.0",
-    "vitest": "^3.2.6"
+    "vitest": "^4.1.10"
   }
 }
