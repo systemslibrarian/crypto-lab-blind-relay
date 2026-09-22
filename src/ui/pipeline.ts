@@ -90,7 +90,7 @@ export function pipelinePanel(): string {
   return `
   <section class="panel" aria-labelledby="pipe-h">
     <h2 id="pipe-h">The knowledge split, live</h2>
-    <p class="panel-lede">Type a query you would rather not have attached to your name, then step the request
+    <p class="panel-lede">Invent a query you would rather not have attached to your name (make one up; do not type a real search of your own), then step the request
     through the system. Every fact in every card below is computed from the real bytes each party holds —
     the relay's card shows genuine HPKE ciphertext, the gateway's shows the genuine decryption.</p>
     <div class="controls">
