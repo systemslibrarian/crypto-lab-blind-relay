@@ -19,8 +19,8 @@
  * under one key never reuses (key, nonce). The plain (unlabeled) HKDF here
  * vs the labeled HPKE schedule on the request path is straight from the RFC.
  */
-import { extract, expand } from '@noble/hashes/hkdf';
-import { sha256 } from '@noble/hashes/sha2';
+import { extract, expand } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { aeadOpen, aeadSeal } from '@hub/hpke/aead';
 import { concatBytes, randomBytes, utf8 } from '@hub/hpke/bytes';
 import { AEAD_NK, type AeadId, NN } from '@hub/hpke/consts';
