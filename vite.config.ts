@@ -24,6 +24,9 @@ export default defineConfig({
   base: '/crypto-lab-blind-relay/',
   resolve: {
     alias: { '@hub/hpke': hubHpke },
+    // Imported HPKE source must use this consumer's locked dependencies, even
+    // when a sibling checkout has installed its own copy of the same packages.
+    dedupe: ['@noble/curves', '@noble/ciphers', '@noble/hashes'],
   },
   build: {
     target: 'es2022',

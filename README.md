@@ -92,16 +92,22 @@ This lab **consumes the hub's HPKE module** from a sibling checkout:
 
 ```bash
 git clone https://github.com/systemslibrarian/crypto-lab-hpke-envelope
+git -C crypto-lab-hpke-envelope checkout 7d7992ba5160f5d6c9f46186b8480dd09a9e6ffa
 git clone https://github.com/systemslibrarian/crypto-lab-blind-relay
 cd crypto-lab-blind-relay
 npm install
 npm run dev        # Vite dev server
-npm test           # 60 unit tests (Vitest)
+npm test           # crypto vectors and module-resolution controls (Vitest)
 npm run build      # typecheck + production build
 npm run test:a11y  # WCAG 2.1 A/AA gate, 2 themes x 2 viewports (Playwright)
 ```
 
-(CI checks the hub out into `./hub/` instead; `vite.config.ts` looks in both places.)
+CI checks the same inspected HPKE commit out into `./hub/` instead;
+`vite.config.ts` looks in both places. Imported HPKE source uses this lab's
+locked Noble packages in either layout. Vite deduplicates those packages so
+installing dependencies in the sibling checkout does not change the build graph.
+An HPKE source update requires reviewing the new commit and rerunning the
+crypto, build and browser gates before changing the workflow pin.
 
 ## Related Demos
 
@@ -115,13 +121,15 @@ npm run test:a11y  # WCAG 2.1 A/AA gate, 2 themes x 2 viewports (Playwright)
 
 ## Build & Verify
 
-- **60 Vitest unit tests**, all passing: **17 known-answer tests against the RFC 9458 Appendix A
+- **62 Vitest unit tests**, all passing: **17 known-answer tests against the RFC 9458 Appendix A
   vector** (`src/ohttp/kat.test.ts` — key config bytes, BHTTP encodings, `info` construction,
   request decapsulation + ciphertext reproduction, response secret/salt/prk/key/nonce, and the
   full encapsulated response), plus BHTTP round-trips, varint and padding checks, fail-closed
   suites for request/response/key-config parsing and tampering, knowledge-split/collusion model
   tests, and the passive correlation models — size join (correct unpadded, ambiguous padded) and
-  timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap).
+  timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap),
+  and two module-resolution controls proving the consumed source shares the consumer's
+  locked package, with a negative control that resolves a second instance without deduplication.
 - **16 Playwright e2e tests**: a WCAG 2.1 A/AA gate that drives the lab the way a visitor drives it
   — an exchange sealed and walked through all nine pipeline steps, auto-play started and paused,
   collusion flipped on and off, four clients simulated and joined on size and on timing with padding
