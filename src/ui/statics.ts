@@ -88,25 +88,23 @@ export function comparisonPanel(): string {
 export function realWorldPanel(): string {
   return `
   <section class="panel" aria-labelledby="rw-h">
-    <h2 id="rw-h">Where you already use this</h2>
-    <p class="panel-lede">Named, not implemented here:</p>
+    <h2 id="rw-h">OHTTP in practice and related designs</h2>
     <div class="rw-grid">
       <div class="rw">
         <h3>Apple iCloud Private Relay</h3>
-        <p>The same split-knowledge architecture — two independently operated hops, one seeing your IP and one
-        seeing your destination — built on MASQUE proxying rather than OHTTP messages. Apple runs the first hop;
-        a partner CDN runs the second.</p>
+        <p>Apple’s first relay sees the device IP address. A separate provider operates the second relay and connects
+        to the destination. This is a related two-hop design. <a href="https://support.apple.com/en-us/102602">Apple’s description</a></p>
       </div>
       <div class="rw">
-        <h3>Firefox telemetry &amp; suggestions</h3>
-        <p>Mozilla ships OHTTP itself: telemetry reports and search suggestions travel as encapsulated requests
-        through a relay run by a separate operator, so Mozilla's gateway sees the data but never the IP it came from.</p>
+        <h3>Firefox Suggest</h3>
+        <p>In supported versions and regions, Firefox can use OHTTP to request real-time suggestions from Mozilla.
+        The gateway sees the query and the relay’s address. <a href="https://support.mozilla.org/en-US/kb/firefox-suggest">Firefox Suggest settings</a></p>
       </div>
       <div class="rw">
-        <h3>Privacy Pass rate limiting</h3>
-        <p>Rate-limited token issuance splits the issuer from a mediator: one party can count how often you ask,
-        the other can see what you're asking for — neither can do both. OHTTP-style key configs and encapsulation
-        carry the messages.</p>
+        <h3>Privacy Pass tokens</h3>
+        <p>Privacy Pass lets a client obtain a token and redeem it later. An OHTTP service can accept such a token
+        as proof of authorization. <a href="https://www.rfc-editor.org/rfc/rfc9576.html#section-3.2">RFC 9576 §3.2</a>
+        gives this as an example use of tokens. OHTTP encapsulation is a separate protocol.</p>
       </div>
     </div>
   </section>`;

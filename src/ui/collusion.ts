@@ -23,7 +23,7 @@ export function collusionPanel(): string {
     <div id="collude-out" role="status" aria-live="polite"></div>
     <details class="expert">
       <summary>Why this is the honest headline, not a footnote</summary>
-      <p class="note">OHTTP's guarantee is <em>organizational</em>: two named parties must stay separate.
+      <p class="note">OHTTP relies on two independent operators and a request that carries no identifying state.
       Contrast information-theoretic PIR (<a href="${LABS.patronShield}">patron-shield</a>,
       <a href="${LABS.obliviousShelf}">oblivious-shelf</a>), where even unbounded computation by fewer than all
       servers reveals nothing — no promise required, only non-collusion of <em>any</em> one server out of n.

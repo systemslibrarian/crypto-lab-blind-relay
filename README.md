@@ -23,8 +23,7 @@ The cryptography is real and runs in your tab:
   demo sends (not a conformance suite).
 
 The **network is simulated**: all four parties live in one page, and the IP addresses are
-RFC 5737 documentation placeholders. Security model: OHTTP's guarantee is *organizational*
-(two named parties must not collude), and the demo's centerpiece is the switch that revokes it.
+RFC 5737 documentation placeholders. The relay and gateway must operate independently. Request content and observable metadata can still link exchanges.
 **Not production crypto — a teaching demo.**
 
 ## Exhibits
@@ -49,9 +48,8 @@ RFC 5737 documentation placeholders. Security model: OHTTP's guarantee is *organ
    `context.Export("message/bhttp response")` + a fresh public nonce through plain HKDF, with the
    client's and gateway's independent derivations compared byte-for-byte.
 6. **OHTTP vs VPN vs Tor vs IT-PIR** — what each hides, from whom, under what assumption, at what
-   cost — honest that OHTTP has the *weakest* collusion story of the four.
-7. **Where you already use this** — Apple iCloud Private Relay (same split, MASQUE-based),
-   Firefox telemetry (OHTTP itself), Privacy Pass rate limiting. Named, not implemented.
+   cost, and how the protected information differs.
+7. **OHTTP in practice and related designs** — Firefox Suggest, Apple iCloud Private Relay and Privacy Pass tokens.
 
 ## When to Use It
 
@@ -83,9 +81,7 @@ request through the split, flip the collusion switch, and mount the three relay-
 
 ## Real-World Usage
 
-Apple iCloud Private Relay (two-hop split via MASQUE), Firefox telemetry & search suggestions
-(OHTTP proper, relay run by a separate operator), Privacy Pass rate-limited token issuance
-(issuer/mediator split). See the in-page panel for the precise claims.
+[Firefox Suggest](https://support.mozilla.org/en-US/kb/firefox-suggest) can use OHTTP for real-time suggestions in supported versions and regions. [Apple iCloud Private Relay](https://support.apple.com/en-us/102602) also uses two operators. [RFC 9576 §3.2](https://www.rfc-editor.org/rfc/rfc9576.html#section-3.2) describes how Privacy Pass tokens can authorize access to an OHTTP service.
 
 ## How to Run Locally
 
