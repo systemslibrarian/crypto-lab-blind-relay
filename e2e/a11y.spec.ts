@@ -10,7 +10,7 @@ import { boot, driveAllStates, expectBaselineNotStale, NARROW, reportCollected }
  * on size and on timing with padding off and then on, all three attacks fired
  * against the real decapsulation, the request re-run as a POST under
  * ChaCha20-Poly1305, the empty-query fallback taken, and every disclosure opened
- * by its own summary. Every resulting state is scanned in both themes at desktop
+ * by its own summary. Every resulting state is scanned in the published dark theme at desktop
  * and phone width.
  *
  * See `gate.ts` for why nothing is injected into the page, why reduced motion is

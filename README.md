@@ -96,7 +96,7 @@ npm install
 npm run dev        # Vite dev server
 npm test           # crypto vectors and module-resolution controls (Vitest)
 npm run build      # typecheck + production build
-npm run test:a11y  # WCAG 2.1 A/AA gate, 2 themes x 2 viewports (Playwright)
+npm run test:a11y  # WCAG 2.1 A/AA gate, dark theme, desktop and phone (Playwright)
 ```
 
 CI checks the same inspected HPKE commit out into `./hub/` instead;
@@ -127,12 +127,12 @@ crypto, build and browser gates before changing the workflow pin.
   timing join (defeats padding; reports ambiguity instead of guessing when arrivals overlap),
   and two module-resolution controls proving the consumed source shares the consumer's
   locked package, with a negative control that resolves a second instance without deduplication.
-- **16 Playwright e2e tests**: a WCAG 2.1 A/AA gate that drives the lab the way a visitor drives it
+- **15 Playwright e2e tests**: a WCAG 2.1 A/AA gate that drives the lab the way a visitor drives it
   — an exchange sealed and walked through all nine pipeline steps, auto-play started and paused,
   collusion flipped on and off, four clients simulated and joined on size and on timing with padding
   off and then on, all three attacks fired, the request re-run as a POST under ChaCha20-Poly1305,
-  and every disclosure opened by its own summary — and **scans after every single step**, in both
-  themes at 1280px and 380px. Nothing is injected into the page: reduced motion is asked for and
+  and every disclosure opened by its own summary — and **scans after every single step**, in the published dark theme
+  at 1280px and 380px. Nothing is injected into the page: reduced motion is asked for and
   asserted, so the lab's own `prefers-reduced-motion` handling is exercised rather than bypassed.
   `violations` is not the whole oracle — the gate also fails on axe's `incomplete` bucket, on an
   arithmetic composite-aware contrast measurement (opacity and `color-mix()` included), on
