@@ -31,7 +31,7 @@ export const STEPS: StepDef[] = [
     title: 'Seal',
     at: 0,
     chip: 'hdr ‖ enc ‖ ct',
-    desc: 'HPKE Base mode seals the BHTTP bytes to the gateway’s public key, with the key-config header bound into the info string. A fresh ephemeral key makes this request unlinkable to any other.',
+    desc: 'HPKE Base mode seals the BHTTP bytes to the gateway’s public key, with the key-config header bound into the info string. A fresh ephemeral key gives this exchange a new encapsulation. Repeated identifiers in the request can still link exchanges.',
   },
   {
     title: 'Relay',
@@ -67,7 +67,7 @@ export const STEPS: StepDef[] = [
     title: 'Client opens',
     at: 0,
     chip: 'response (plaintext)',
-    desc: 'The client re-derives the identical response keys and opens the answer. Round trip complete — and no single party ever held both your identity and your request.',
+    desc: 'The client re-derives the identical response keys and opens the answer. Round trip complete. The relay saw the client address and the gateway read the request. Identifiers in the request itself can reveal who sent it.',
   },
 ];
 
@@ -133,8 +133,7 @@ export function pipelinePanel(): string {
       The header is not encrypted — the relay can read <em>which gateway key</em> you sealed to (it must not
       be per-user, or the key config itself becomes a tracking cookie; RFC 9458 §7 requires key consistency).
       HPKE runs in Base mode with <code>info = "message/bhttp request" ‖ 0x00 ‖ hdr</code>, so a header
-      tampered in transit changes the derived key and the AEAD tag fails. The client is anonymous to the
-      gateway by construction: Base mode authenticates no sender.</p>
+      tampered in transit changes the derived key and the AEAD tag fails. HPKE Base mode supplies no sender authentication. The gateway still reads the request, including any identifying content.</p>
     </details>
   </section>`;
 }

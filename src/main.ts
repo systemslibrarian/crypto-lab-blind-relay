@@ -44,7 +44,7 @@ const parties = byId('parties');
 const colludeSwitch = byId<HTMLButtonElement>('collude-switch');
 const colludeHint = byId('collude-hint');
 const colludeOut = byId('collude-out');
-const attackOut = byId('attack-out');
+let attackOut = byId('attack-out');
 const schedOut = byId('sched-out');
 const attackButtons = [
   byId<HTMLButtonElement>('attack-wrongkey'),
@@ -67,15 +67,41 @@ function paint(): void {
   renderSchedules(schedOut, state.exchange);
 }
 
-async function run(): Promise<void> {
+let exchangeVersion = 0;
+const emptyStatus = stepStatus.textContent;
+const emptySchedule = schedOut.textContent;
+
+function clearExchange(): void {
+  exchangeVersion += 1;
   stopPlay();
-  const query = byId<HTMLInputElement>('query-input').value.trim() || 'chest pain symptoms';
+  state.exchange = null;
+  state.step = 0;
+  state.colluding = false;
+  for (const button of [backBtn, nextBtn, playBtn, allBtn, colludeSwitch, ...attackButtons]) button.disabled = true;
+  runBtn.disabled = false;
+  colludeSwitch.setAttribute('aria-checked', 'false');
+  colludeHint.textContent = 'Run an exchange first.';
+  stepStatus.textContent = emptyStatus;
+  schedOut.textContent = emptySchedule;
+  wireChip.hidden = true;
+  colludeOut.replaceChildren();
+  // An earlier asynchronous check may still write to its old result element.
+  const freshOutput = attackOut.cloneNode(false) as HTMLElement;
+  attackOut.replaceWith(freshOutput);
+  attackOut = freshOutput;
+  paint();
+}
+
+async function run(): Promise<void> {
+  clearExchange();
+  const version = exchangeVersion;
+  const query = byId<HTMLInputElement>('query-input').value;
   const method = byId<HTMLSelectElement>('method-select').value === 'POST' ? 'POST' : 'GET';
   const aeadId: AeadId =
     byId<HTMLSelectElement>('aead-select').value === '3' ? AEAD_CHACHA20_POLY1305 : AEAD_AES_128_GCM;
   runBtn.disabled = true;
   try {
-    state.exchange = await runExchange(
+    const exchange = await runExchange(
       method === 'GET'
         ? {
             method,
@@ -95,8 +121,13 @@ async function run(): Promise<void> {
           },
       { gatewayKeys },
     );
+    if (version !== exchangeVersion) return;
+    state.exchange = exchange;
+  } catch {
+    if (version === exchangeVersion) stepStatus.textContent = 'Exchange failed. Run the exchange to try again.';
+    return;
   } finally {
-    runBtn.disabled = false;
+    if (version === exchangeVersion) runBtn.disabled = false;
   }
   playBtn.disabled = false;
   state.step = 0;
@@ -139,6 +170,9 @@ playBtn.addEventListener('click', () => {
   }, 1600);
 });
 
+byId('query-input').addEventListener('input', clearExchange);
+byId('method-select').addEventListener('change', clearExchange);
+byId('aead-select').addEventListener('change', clearExchange);
 runBtn.addEventListener('click', () => void run());
 backBtn.addEventListener('click', () => {
   stopPlay();

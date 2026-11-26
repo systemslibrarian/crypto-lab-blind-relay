@@ -3,8 +3,9 @@
 ## What It Is
 
 An interactive browser demo of **Oblivious HTTP (RFC 9458)**: a three-party HTTP request where the
-**relay** knows your address but not your request, the **gateway** knows your request but not your
-address, and neither can be trusted alone.
+**relay** sees the client connection address and an encrypted request. The **gateway** sees the relay’s
+address and decrypts the request. A name, cookie, or account identifier in that request can identify the client
+even when the operators keep their records separate ([RFC 9458 §6.1](https://www.rfc-editor.org/rfc/rfc9458.html#section-6.1)).
 
 The point it teaches: encryption stops a party from *reading* data — it does nothing about a party
 *knowing that you asked*. OHTTP gets privacy from a different move entirely: splitting knowledge

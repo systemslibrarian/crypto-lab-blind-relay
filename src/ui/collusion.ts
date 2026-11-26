@@ -12,9 +12,7 @@ export function collusionPanel(): string {
   return `
   <section class="panel" aria-labelledby="collude-h">
     <h2 id="collude-h">The collusion toggle</h2>
-    <p class="panel-lede">Everything above holds under one assumption: <strong>the relay and the gateway do not
-    compare notes.</strong> That assumption is organizational — a contract, a jurisdiction, a reputation — not
-    cryptographic. Flip it and watch.</p>
+    <p class="panel-lede">The relay sees the client connection address and the gateway reads the request. Turn on the switch to see what the two simulated operators learn by combining their records.</p>
     <div class="collusion-toggle-row">
       <button type="button" class="switch" id="collude-switch" role="switch" aria-checked="false" disabled>
         <span class="knob" aria-hidden="true"></span>
@@ -44,8 +42,8 @@ export function renderCollusion(out: HTMLElement, x: Exchange, on: boolean): voi
           <span class="verdict-body">Every HPKE seal/open verified — nothing failed, nothing was forged.</span>
         </div>
         <div class="verdict verdict-ok">
-          <span class="verdict-kicker">Privacy verdict</span>
-          <span class="verdict-body">✓ HOLDS — no single party knows both who you are and what you asked.</span>
+          <span class="verdict-kicker">Transport address separation</span>
+          <span class="verdict-body">✓ HOLDS — the gateway sees the relay’s connection address. A name or account identifier in the request can still tell the gateway who sent it.</span>
         </div>
       </div>`;
     return;
@@ -72,6 +70,5 @@ export function renderCollusion(out: HTMLElement, x: Exchange, on: boolean): voi
         }</span>
       </div>
     </div>
-    <p class="note">This is the whole lesson: encryption was never the guarantee here. The guarantee was two
-    organizations refusing to run this join — privacy as an architecture, revocable by a business decision.</p>`;
+    <p class="note">Independent operators keep the transport address and the decrypted request in separate records. Identifying content can link requests even when the operators keep their records separate.</p>`;
 }

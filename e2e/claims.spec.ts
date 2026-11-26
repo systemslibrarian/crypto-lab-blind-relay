@@ -84,6 +84,47 @@ async function runFull(page: Page, query: string): Promise<void> {
   await expect(page.locator('#step-status')).toContainText('Step 9 of 9');
 }
 
+test('editing a request retires its exchange, then preserves the exact new input on rerun', async ({ page }) => {
+  await page.goto('.');
+  const query = 'Reader-17 + Café 📚  ';
+  await runFull(page, query);
+  const initial = await dumpParties(page);
+  expect(knows(initial[2], 'request (decrypted)')).toContain(encodeURIComponent(query).replace(/%20/g, '+'));
+  await expect(page.locator('#collude-out .verdict-ok')).toContainText('identifier');
+
+  async function expectCleared(): Promise<void> {
+    await expect(page.locator('#next-btn')).toBeDisabled();
+    await expect(page.locator('#play-btn')).toBeDisabled();
+    await expect(page.locator('#collude-switch')).toBeDisabled();
+    await expect(page.locator('#attack-tamper')).toBeDisabled();
+    await expect(page.locator('#wire-chip')).toBeHidden();
+    await expect(page.locator('#step-status')).toContainText('No exchange yet');
+    await expect(page.locator('#collude-out')).toBeEmpty();
+    await expect(page.locator('#sched-out .hex')).toHaveCount(0);
+    expect((await dumpParties(page))[2].knows).toEqual([]);
+  }
+
+  await page.locator('#method-select').selectOption('POST');
+  await expectCleared();
+  await runFull(page, query);
+  const submitted = await dumpParties(page);
+  const body = Buffer.from(raw(knows(submitted[0], 'request as BHTTP bytes')), 'hex');
+  expect(body.includes(Buffer.from(JSON.stringify({ note: query })))).toBe(true);
+
+  await page.locator('#aead-select').selectOption('3');
+  await expectCleared();
+  await runFull(page, query);
+  const newSuite = await dumpParties(page);
+  expect(raw(knows(newSuite[0], 'sealed request')).slice(10, 14)).toBe('0003');
+
+  await page.locator('#query-input').fill('');
+  await expectCleared();
+  await runFull(page, '');
+  const empty = await dumpParties(page);
+  const received = JSON.parse(knows(empty[0], 'response (decrypted)').split(' · ')[1]);
+  expect(received.received).toBe(Buffer.byteLength(JSON.stringify({ note: '' })));
+});
+
 async function simulateCrowd(page: Page): Promise<void> {
   await page.locator('#crowd-btn').click();
   await expect(page.locator('#crowd-join')).toBeEnabled();

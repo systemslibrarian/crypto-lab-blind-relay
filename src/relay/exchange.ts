@@ -297,13 +297,13 @@ export function computeViews(x: Exchange): PartyView[] {
       ],
       cannotKnow: [
         {
-          label: 'the client IP / network identity',
-          reason: 'the protocol shows it only the relay; anything more must leak from the request body itself',
+          label: 'the client IP from its incoming connection',
+          reason: 'its TCP peer is the relay; the decrypted request may separately disclose identifying information',
           stage: 4,
         },
         {
-          label: 'which requests came from the same client',
-          reason: 'each request uses a fresh ephemeral HPKE key',
+          label: 'which requests share a client from the HPKE key alone',
+          reason: 'each request uses a fresh ephemeral HPKE key; repeated content may still link requests',
           stage: 4,
         },
       ],
@@ -316,7 +316,7 @@ export function computeViews(x: Exchange): PartyView[] {
         { label: 'requester it sees', value: ADDRESSES.gateway.name, kind: 'transport', stage: 5 },
       ],
       cannotKnow: [
-        { label: 'the client IP', reason: 'the request arrives from the gateway', stage: 5 },
+        { label: 'the client IP from its incoming connection', reason: 'its network peer is the gateway', stage: 5 },
       ],
     },
   ];

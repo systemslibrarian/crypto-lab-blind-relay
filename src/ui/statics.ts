@@ -12,10 +12,10 @@ export function introPanel(): string {
     </p>
     <p class="panel-lede">
       Oblivious HTTP (RFC 9458) splits the two facts between two different organizations: a
-      <strong>relay</strong> that knows who you are but carries only ciphertext, and a
-      <strong>gateway</strong> that decrypts your request but only ever sees the relay.
-      The privacy comes from the <em>architecture</em>, not a new algorithm — and it holds exactly
-      as long as those two organizations refuse to compare notes.
+      <strong>relay</strong> that sees the client connection address and carries ciphertext, and a
+      <strong>gateway</strong> that sees the relay’s address and decrypts the request. Even when the operators work independently,
+      a name, cookie, or account identifier in the request can reveal who sent it.
+      <a href="https://www.rfc-editor.org/rfc/rfc9458.html#section-6.1">RFC 9458 §6.1</a> explains how clients handle identifying state.
     </p>
   </section>`;
 }
@@ -40,7 +40,7 @@ export function comparisonPanel(): string {
         </thead>
         <tbody>
           <tr>
-            <th scope="row">Who sees your identity</th>
+            <th scope="row">Who directly sees your network address</th>
             <td>the relay only</td>
             <td>the VPN operator</td>
             <td>the guard node only</td>
@@ -50,26 +50,26 @@ export function comparisonPanel(): string {
             <th scope="row">Who sees your request</th>
             <td>the gateway + target only</td>
             <td>the destination (and the VPN, unless TLS inside)</td>
-            <td>the exit + destination</td>
+            <td>the destination; the exit can also read plain HTTP, while HTTPS protects the request contents</td>
             <td><strong>no server</strong> — each sees a query that is statistically independent of what you fetched</td>
           </tr>
           <tr class="this-row">
             <th scope="row">What you must assume</th>
             <td><strong>2 specific parties do not collude</strong> — an organizational promise</td>
             <td>1 party is fully honest (it sees both facts)</td>
-            <td>your 3-hop circuit is not fully controlled by one adversary</td>
+            <td>observation of the entry and exit traffic cannot be combined to link the endpoints</td>
             <td>at least 1 of n servers is honest — <em>information-theoretic</em>, holds against unlimited computation</td>
           </tr>
           <tr>
             <th scope="row">If the assumption fails</th>
             <td>who + what join instantly (flip the switch above)</td>
-            <td>the operator already had everything</td>
+            <td>the operator can associate the client with the destination; HTTPS still protects request contents</td>
             <td>traffic correlation reveals who talked to whom</td>
             <td>colluding all n servers reveals the query index</td>
           </tr>
           <tr>
             <th scope="row">Cost</th>
-            <td>one extra hop; a few hundred bytes of HPKE overhead</td>
+            <td>one relay hop; this suite adds 55 bytes to the binary request before padding (7-byte header, 32-byte encapsulated key, 16-byte tag)</td>
             <td>one extra hop</td>
             <td>3+ hops, high latency</td>
             <td>every server scans the whole database per query</td>
@@ -77,9 +77,9 @@ export function comparisonPanel(): string {
         </tbody>
       </table>
     </div>
-    <p class="note">Honest weakness: OHTTP is the <em>weakest</em> of these against collusion — exactly two named
-    parties must stay separate, versus three independently-chosen hops for Tor, and IT-PIR's guarantee that
-    <em>no</em> coalition short of all servers learns anything. OHTTP buys deployability with that weaker assumption.
+    <p class="note">These systems protect different information. OHTTP separates the client address from the HTTP content
+    across two operators. Tor routes a connection through several relays; <a href="https://support.torproject.org/tor-browser/features/secure-connections/">HTTPS</a>
+    protects the content between the browser and the destination. The multi-server PIR example hides the selected record from each server.
     For the information-theoretic end of this spectrum, see
     <a href="${LABS.patronShield}">patron-shield</a> and <a href="${LABS.obliviousShelf}">oblivious-shelf</a>.</p>
   </section>`;
